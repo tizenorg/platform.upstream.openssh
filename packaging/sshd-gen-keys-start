@@ -1,0 +1,21 @@
+#!/bin/bash
+
+       if ! /bin/grep -q '^[[:space:]]*HostKey[[:space:]]' /etc/ssh/sshd_config; then
+                if ! test -f /etc/ssh/ssh_host_key ; then
+                    echo Generating /etc/ssh/ssh_host_key.
+                    /usr/bin/ssh-keygen -t rsa1 -b 2048 -f /etc/ssh/ssh_host_key -N ''
+                fi
+                if ! test -f /etc/ssh/ssh_host_dsa_key ; then
+                    echo Generating /etc/ssh/ssh_host_dsa_key.
+                    /usr/bin/ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -N ''
+                fi
+                if ! test -f /etc/ssh/ssh_host_rsa_key ; then
+                    echo Generating /etc/ssh/ssh_host_rsa_key.
+                    /usr/bin/ssh-keygen -t rsa -b 2048 -f /etc/ssh/ssh_host_rsa_key -N ''
+                fi
+                if ! test -f /etc/ssh/ssh_host_ecdsa_key ; then
+                    echo Generating /etc/ssh/ssh_host_ecdsa_key.
+                    /usr/bin/ssh-keygen -t ecdsa -b 256 -f /etc/ssh/ssh_host_ecdsa_key -N ''
+                fi
+        fi
+
