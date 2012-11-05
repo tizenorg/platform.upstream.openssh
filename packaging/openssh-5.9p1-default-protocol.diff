@@ -1,0 +1,13 @@
+Index: ssh_config
+===================================================================
+--- ssh_config.orig
++++ ssh_config
+@@ -46,7 +46,7 @@ ForwardX11Trusted yes
+ #   IdentityFile ~/.ssh/id_rsa
+ #   IdentityFile ~/.ssh/id_dsa
+ #   Port 22
+-#   Protocol 2,1
++    Protocol 2
+ #   Cipher 3des
+ #   Ciphers aes128-ctr,aes192-ctr,aes256-ctr,arcfour256,arcfour128,aes128-cbc,3des-cbc
+ #   MACs hmac-md5,hmac-sha1,umac-64@openssh.com,hmac-ripemd160

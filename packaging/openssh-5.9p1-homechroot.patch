@@ -1,0 +1,277 @@
+Index: chrootenv.h
+===================================================================
+--- /dev/null
++++ chrootenv.h
+@@ -0,0 +1,32 @@
++/* $OpenBSD: session.h,v 1.30 2008/05/08 12:21:16 djm Exp $ */
++
++/*
++ * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++#ifndef CHROOTENV_H
++#define CHROOTENV_H
++
++extern int	chroot_no_tree;
++
++#endif
++
+Index: session.c
+===================================================================
+--- session.c.orig
++++ session.c
+@@ -120,6 +120,8 @@ void	do_child(Session *, const char *);
+ void	do_motd(void);
+ int	check_quietlogin(Session *, const char *);
+ 
++int	chroot_no_tree = 0;
++
+ static void do_authenticated1(Authctxt *);
+ static void do_authenticated2(Authctxt *);
+ 
+@@ -808,6 +810,11 @@ do_exec(Session *s, const char *command)
+ 		debug("Forced command (key option) '%.900s'", command);
+ 	}
+ 
++	if ((s->is_subsystem != SUBSYSTEM_INT_SFTP) && chroot_no_tree) {
++		logit("You aren't welcomed, go away!");
++		exit (1);
++	}
++
+ #ifdef SSH_AUDIT_EVENTS
+ 	if (command != NULL)
+ 		PRIVSEP(audit_run_command(command));
+@@ -1421,6 +1428,63 @@ do_nologin(struct passwd *pw)
+ }
+ 
+ /*
++ * Test if filesystem is mounted nosuid and nodev
++ */
++
++static void
++test_nosuid (char * path, dev_t fs)
++{
++	FILE *f;
++	struct stat st;
++	char buf[4096], *s, *on, *mountpoint, *opt;
++	int nodev, nosuid;
++
++	if (!(f = popen ("/bin/mount", "r")))
++		fatal ("%s: popen(\"/bin/mount\", \"r\"): %s",
++		    __func__, strerror (errno));
++	for (;;) {
++		s = fgets (buf, sizeof (buf), f);
++		if (ferror (f))
++			fatal ("%s: read from popen: %s", __func__,
++			    strerror (errno));
++		if (!s) {
++			pclose (f);
++			fatal ("cannot found filesystem with the chroot directory");
++		}
++		(void) strtok (buf, " ");
++		on = strtok (NULL, " ");
++		if (strcmp (on, "on")) {
++			pclose (f);
++			fatal ("bad format of mount output");
++		}
++		mountpoint = strtok (NULL, " ");
++		if (memcmp (path, mountpoint, strlen (mountpoint)))
++			continue;
++		if (stat(mountpoint, &st) != 0) {
++			pclose (f);
++			fatal("%s: stat(\"%s\"): %s", __func__,
++			    mountpoint, strerror(errno));
++		}
++		if (fs != st.st_dev)
++			continue;
++		nodev = nosuid = 0;
++		for (opt = strtok (NULL, "("); opt; opt = strtok (NULL, " ,)")) {
++			if (!strcmp (opt, "nodev"))
++				nodev = 1;
++			else if (!strcmp (opt, "nosuid"))
++				nosuid = 1;
++			else if (!strcmp (opt, "noexec"))
++				nosuid = 1;
++			if (nodev && nosuid) {
++				pclose (f);
++				return;
++			}
++		}
++		fatal ("chroot into directory without nodev or nosuid");
++	}
++}
++
++/*
+  * Chroot into a directory after checking it for safety: all path components
+  * must be root-owned directories with strict permissions.
+  */
+@@ -1430,6 +1494,7 @@ safely_chroot(const char *path, uid_t ui
+ 	const char *cp;
+ 	char component[MAXPATHLEN];
+ 	struct stat st;
++	int last;
+ 
+ 	if (*path != '/')
+ 		fatal("chroot path does not begin at root");
+@@ -1441,7 +1506,7 @@ safely_chroot(const char *path, uid_t ui
+ 	 * root-owned directory with strict permissions.
+ 	 */
+ 	for (cp = path; cp != NULL;) {
+-		if ((cp = strchr(cp, '/')) == NULL)
++		if (((last = ((cp = strchr(cp, '/')) == NULL))))
+ 			strlcpy(component, path, sizeof(component));
+ 		else {
+ 			cp++;
+@@ -1454,14 +1519,20 @@ safely_chroot(const char *path, uid_t ui
+ 		if (stat(component, &st) != 0)
+ 			fatal("%s: stat(\"%s\"): %s", __func__,
+ 			    component, strerror(errno));
+-		if (st.st_uid != 0 || (st.st_mode & 022) != 0)
++		if ((st.st_uid != 0 || (st.st_mode & 022) != 0) && !(last && st.st_uid == uid))
+ 			fatal("bad ownership or modes for chroot "
+ 			    "directory %s\"%s\"", 
+ 			    cp == NULL ? "" : "component ", component);
+ 		if (!S_ISDIR(st.st_mode))
+ 			fatal("chroot path %s\"%s\" is not a directory",
+ 			    cp == NULL ? "" : "component ", component);
++	}
++	setenv ("TZ", "/etc/localtime", 0);
++	tzset ();
+ 
++	if (st.st_uid) {
++		test_nosuid (path, st.st_dev);
++		++chroot_no_tree;
+ 	}
+ 
+ 	if (chdir(path) == -1)
+@@ -1472,6 +1543,10 @@ safely_chroot(const char *path, uid_t ui
+ 	if (chdir("/") == -1)
+ 		fatal("%s: chdir(/) after chroot: %s",
+ 		    __func__, strerror(errno));
++
++	if (access ("/etc/localtime", R_OK) < 0)
++		++chroot_no_tree;
++
+ 	verbose("Changed root directory to \"%s\"", path);
+ }
+ 
+Index: sftp.c
+===================================================================
+--- sftp.c.orig
++++ sftp.c
+@@ -106,6 +106,8 @@ int remote_glob(struct sftp_conn *, cons
+ 
+ extern char *__progname;
+ 
++int	chroot_no_tree = 0;
++
+ /* Separators for interactive commands */
+ #define WHITESPACE " \t\r\n"
+ 
+Index: sftp-common.c
+===================================================================
+--- sftp-common.c.orig
++++ sftp-common.c
+@@ -43,6 +43,7 @@
+ #include "xmalloc.h"
+ #include "buffer.h"
+ #include "log.h"
++#include "chrootenv.h"
+ 
+ #include "sftp.h"
+ #include "sftp-common.h"
+@@ -196,13 +197,13 @@ ls_file(const char *name, const struct s
+ 	char sbuf[FMT_SCALED_STRSIZE];
+ 
+ 	strmode(st->st_mode, mode);
+-	if (!remote) {
++	if (!remote && !chroot_no_tree) {
+ 		user = user_from_uid(st->st_uid, 0);
+ 	} else {
+ 		snprintf(ubuf, sizeof ubuf, "%u", (u_int)st->st_uid);
+ 		user = ubuf;
+ 	}
+-	if (!remote) {
++	if (!remote && !chroot_no_tree) {
+ 		group = group_from_gid(st->st_gid, 0);
+ 	} else {
+ 		snprintf(gbuf, sizeof gbuf, "%u", (u_int)st->st_gid);
+Index: sftp-server-main.c
+===================================================================
+--- sftp-server-main.c.orig
++++ sftp-server-main.c
+@@ -22,11 +22,14 @@
+ #include <stdarg.h>
+ #include <stdio.h>
+ #include <unistd.h>
++#include <time.h>
+ 
+ #include "log.h"
+ #include "sftp.h"
+ #include "misc.h"
+ 
++int	chroot_no_tree = 0;
++
+ void
+ cleanup_exit(int i)
+ {
+Index: sshd_config.0
+===================================================================
+--- sshd_config.0.orig
++++ sshd_config.0
+@@ -143,6 +143,14 @@ DESCRIPTION
+              though sessions which use logging do require /dev/log inside the
+              chroot directory (see sftp-server(8) for details).
+ 
++             In the special case when only sftp is used, not ssh nor scp, it
++             is possible to use ChrootDirectory %h or ChrootDirectory
++             /some/path/%u. The file system containing this directory must be
++             mounted with options nodev and either nosuid or noexec. The owner
++             of the directory should be the user. The ownership of the other
++             components of the path must fulfill the usual conditions. No adi-
++             tional files are required to be present in the directory.
++
+              The default is not to chroot(2).
+ 
+      Ciphers
+Index: sshd_config.5
+===================================================================
+--- sshd_config.5.orig
++++ sshd_config.5
+@@ -268,6 +268,17 @@ inside the chroot directory (see
+ .Xr sftp-server 8
+ for details).
+ .Pp
++In the special case when only sftp is used, not ssh nor scp,
++it is possible to use
++.Cm ChrootDirectory
++%h or
++.Cm ChrootDirectory
++/some/path/%u. The file system containing this directory must be
++mounted with options nodev and either nosuid or noexec. The owner of the
++directory should be the user. The ownership of the other components of the path
++must fulfill the usual conditions. No aditional files are required to be present
++in the directory.
++.Pp
+ The default is not to
+ .Xr chroot 2 .
+ .It Cm Ciphers
