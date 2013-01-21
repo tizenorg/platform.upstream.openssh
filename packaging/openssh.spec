@@ -110,9 +110,8 @@ install -D -m 0644 %{SOURCE12} %{buildroot}%{_unitdir}/sshd.service
 install -D -m 0644 %{SOURCE13} %{buildroot}%{_unitdir}/sshd.socket
 install -D -m 0644 %{SOURCE14} %{buildroot}%{_unitdir}/sshd@.service
 
-mkdir -p %{buildroot}/%{_unitdir}/multi-user.target.wants
-ln -s ../sshd.service %{buildroot}/%{_unitdir}/multi-user.target.wants/sshd.service
-
+mkdir -p %{buildroot}/%{_unitdir}/sockets.target.wants
+ln -s ../sshd.socket %{buildroot}/%{_unitdir}/sockets.target.wants/sshd.socket
 
 rm -rf %{buildroot}/%{_mandir}/cat*
 rm -rf %{buildroot}/%{_mandir}/man*
@@ -149,7 +148,7 @@ getent passwd sshd >/dev/null || %{_sbindir}/useradd -r -g sshd -d /var/lib/sshd
 %{_sbindir}/sshd-gen-keys-start
 %{_unitdir}/sshd.service
 %{_unitdir}/sshd@.service
-%{_unitdir}/multi-user.target.wants/*.service
+%{_unitdir}/sockets.target.wants/*.socket
 %{_unitdir}/sshd.socket
 
 %changelog
