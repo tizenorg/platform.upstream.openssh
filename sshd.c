@@ -76,6 +76,7 @@
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 #include "openbsd-compat/openssl-compat.h"
+#include <openssl/engine.h>
 
 #ifdef HAVE_SECUREWARE
 #include <sys/security.h>
@@ -1562,6 +1563,10 @@ main(int ac, char **av)
 		log_redirect_stderr_to(logfile);
 		free(logfile);
 	}
+	/* Init available hardware crypto engines. */
+	ENGINE_load_builtin_engines();
+	ENGINE_register_all_complete();
+
 	/*
 	 * Force logging to stderr until we have loaded the private host
 	 * key (unless started from inetd)

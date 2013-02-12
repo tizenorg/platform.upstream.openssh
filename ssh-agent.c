@@ -51,6 +51,7 @@
 
 #include <openssl/evp.h>
 #include "openbsd-compat/openssl-compat.h"
+#include <openssl/engine.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -1046,6 +1047,10 @@ main(int ac, char **av)
 #endif
 
 	OpenSSL_add_all_algorithms();
+
+	/* Init available hardware crypto engines. */
+	ENGINE_load_builtin_engines();
+	ENGINE_register_all_complete();
 
 	__progname = ssh_get_progname(av[0]);
 	seed_rng();
