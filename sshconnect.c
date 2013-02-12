@@ -966,6 +966,11 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 		    user_hostfiles[0]);
 		error("Offending %s key in %s:%lu", key_type(host_found->key),
 		    host_found->file, host_found->line);
+		error("You can use following command to remove all keys for this IP:");
+		if (host_found->file)
+			error("ssh-keygen -R %s -f %s", hostname, host_found->file);
+		else
+			error("ssh-keygen -R %s", hostname);
 
 		/*
 		 * If strict host key checking is in use, the user will have
