@@ -17,9 +17,20 @@
 # list of available options, their meanings and defaults, please see the
 # ssh_config(5) man page.
 
-# Host *
+Host *
 #   ForwardAgent no
 #   ForwardX11 no
+
+# If you do not trust your remote host (or its administrator), you
+# should not forward X11 connections to your local X11-display for
+# security reasons: Someone stealing the authentification data on the
+# remote side (the "spoofed" X-server by the remote sshd) can read your
+# keystrokes as you type, just like any other X11 client could do.
+# Set this to "no" here for global effect or in your own ~/.ssh/config
+# file if you want to have the remote X11 authentification data to
+# expire after two minutes after remote login.
+ForwardX11Trusted yes
+
 #   RhostsRSAAuthentication no
 #   RSAAuthentication yes
 #   PasswordAuthentication yes
