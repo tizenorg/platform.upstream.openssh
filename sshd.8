@@ -863,7 +863,7 @@ Contains Diffie-Hellman groups used for the "Diffie-Hellman Group Exchange".
 The file format is described in
 .Xr moduli 5 .
 .Pp
-.It Pa /etc/motd
+.It Pa /etc/lib/motd
 See
 .Xr motd 5 .
 .Pp
@@ -876,7 +876,7 @@ are displayed to anyone trying to log in, and non-root connections are
 refused.
 The file should be world-readable.
 .Pp
-.It Pa /etc/shosts.equiv
+.It Pa /etc/ssh/shosts.equiv
 This file is used in exactly the same way as
 .Pa hosts.equiv ,
 but allows host-based authentication without permitting login with
@@ -955,8 +955,7 @@ The content of this file is not sensitive; it can be world-readable.
 .Xr ssh-keyscan 1 ,
 .Xr chroot 2 ,
 .Xr hosts_access 5 ,
-.Xr login.conf 5 ,
-.Xr moduli 5 ,
+.Xr login.defs 5 ,
 .Xr sshd_config 5 ,
 .Xr inetd 8 ,
 .Xr sftp-server 8
