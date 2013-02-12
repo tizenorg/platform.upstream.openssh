@@ -77,6 +77,7 @@
 #include <openssl/md5.h>
 #include <openssl/rand.h>
 #include "openbsd-compat/openssl-compat.h"
+#include <openssl/engine.h>
 
 #ifdef HAVE_SECUREWARE
 #include <sys/security.h>
@@ -1503,6 +1504,10 @@ main(int ac, char **av)
 		closefrom(REEXEC_DEVCRYPTO_RESERVED_FD);
 
 	OpenSSL_add_all_algorithms();
+
+	/* Init available hardware crypto engines. */
+	ENGINE_load_builtin_engines();
+	ENGINE_register_all_complete();
 
 	/*
 	 * Force logging to stderr until we have loaded the private host

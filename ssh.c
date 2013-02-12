@@ -75,6 +75,7 @@
 #include <openssl/err.h>
 #include "openbsd-compat/openssl-compat.h"
 #include "openbsd-compat/sys-queue.h"
+#include <openssl/engine.h>
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -630,6 +631,10 @@ main(int ac, char **av)
 
 	OpenSSL_add_all_algorithms();
 	ERR_load_crypto_strings();
+
+	/* Init available hardware crypto engines. */
+	ENGINE_load_builtin_engines();
+	ENGINE_register_all_complete();
 
 	/* Initialize the command to execute on remote host. */
 	buffer_init(&command);

@@ -22,6 +22,7 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include "openbsd-compat/openssl-compat.h"
+#include <openssl/engine.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -2203,6 +2204,11 @@ main(int argc, char **argv)
 	__progname = ssh_get_progname(argv[0]);
 
 	OpenSSL_add_all_algorithms();
+
+	/* Init available hardware crypto engines. */
+	ENGINE_load_builtin_engines();
+	ENGINE_register_all_complete();
+
 	log_init(argv[0], SYSLOG_LEVEL_INFO, SYSLOG_FACILITY_USER, 1);
 
 	seed_rng();

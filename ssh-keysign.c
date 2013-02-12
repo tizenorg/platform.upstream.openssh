@@ -38,6 +38,7 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
+#include <openssl/engine.h>
 
 #include "xmalloc.h"
 #include "log.h"
@@ -201,6 +202,11 @@ main(int argc, char **argv)
 		fatal("could not open any host key");
 
 	OpenSSL_add_all_algorithms();
+
+	/* Init available hardware crypto engines. */
+	ENGINE_load_builtin_engines();
+	ENGINE_register_all_complete();
+
 	for (i = 0; i < 256; i++)
 		rnd[i] = arc4random();
 	RAND_seed(rnd, sizeof(rnd));

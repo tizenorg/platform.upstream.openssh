@@ -43,6 +43,7 @@
 
 #include <openssl/evp.h>
 #include "openbsd-compat/openssl-compat.h"
+#include <openssl/engine.h>
 
 #include <fcntl.h>
 #include <pwd.h>
@@ -422,6 +423,10 @@ main(int argc, char **argv)
 	seed_rng();
 
 	OpenSSL_add_all_algorithms();
+
+	/* Init available hardware crypto engines. */
+	ENGINE_load_builtin_engines();
+	ENGINE_register_all_complete();
 
 	/* At first, get a connection to the authentication agent. */
 	ac = ssh_get_authentication_connection();
