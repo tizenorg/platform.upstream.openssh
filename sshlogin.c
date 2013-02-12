@@ -133,6 +133,7 @@ record_login(pid_t pid, const char *tty, const char *user, uid_t uid,
 
 	li = login_alloc_entry(pid, user, host, tty);
 	login_set_addr(li, addr, addrlen);
+	li->uid=uid;
 	login_login(li);
 	login_free_entry(li);
 }
