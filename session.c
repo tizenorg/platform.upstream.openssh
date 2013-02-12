@@ -2470,8 +2470,40 @@ void
 session_close(Session *s)
 {
 	u_int i;
+	int do_xauth;
 
 	debug("session_close: session %d pid %ld", s->self, (long)s->pid);
+
+	do_xauth = s->display != NULL && s->auth_proto != NULL && s->auth_data != NULL;
+	if (do_xauth && options.xauth_location != NULL) {
+		pid_t pid;
+		FILE *f;
+		char cmd[1024];
+		struct passwd * pw = s->pw;
+
+		if (!(pid = fork())) {
+			permanently_set_uid(pw);
+
+			/* Remove authority data from .Xauthority if appropriate. */
+			debug("Running %.500s remove %.100s\n",
+				options.xauth_location, s->auth_display);
+
+			snprintf(cmd, sizeof cmd, "unset XAUTHORITY && HOME=\"%.200s\" %s -q -",
+                     		s->pw->pw_dir, options.xauth_location);
+            		f = popen(cmd, "w");
+			if (f) {
+				fprintf(f, "remove %s\n", s->auth_display);
+				pclose(f);
+			} else
+				error("Could not run %s\n", cmd);
+			exit(0);
+		} else if (pid > 0) {
+			int status;
+
+			waitpid(pid, &status, 0);
+		}
+	}
+
 	if (s->ttyfd != -1)
 		session_pty_cleanup(s);
 	if (s->term)
