@@ -22,10 +22,13 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "log.h"
 #include "sftp.h"
 #include "misc.h"
+
+int	chroot_no_tree = 0;
 
 void
 cleanup_exit(int i)

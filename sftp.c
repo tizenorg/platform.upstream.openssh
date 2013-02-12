@@ -114,6 +114,8 @@ int remote_glob(struct sftp_conn *, const char *, int,
 
 extern char *__progname;
 
+int	chroot_no_tree = 0;
+
 /* Separators for interactive commands */
 #define WHITESPACE " \t\r\n"
 
