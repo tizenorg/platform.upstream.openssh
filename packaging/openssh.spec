@@ -19,24 +19,6 @@ Source11:       sshd-gen-keys-start
 Source12:       sshd.service
 Source13:       sshd.socket
 Source14:       sshd@.service
-Patch:          %{name}-5.9p1-sshd_config.diff
-Patch2:         %{name}-5.9p1-pam-fix2.diff
-Patch3:         %{name}-5.9p1-saveargv-fix.diff
-Patch4:         %{name}-5.9p1-pam-fix3.diff
-Patch5:         %{name}-5.9p1-gssapimitm.patch
-Patch6:         %{name}-5.9p1-eal3.diff
-Patch7:         %{name}-5.9p1-engines.diff
-Patch8:         %{name}-5.9p1-blocksigalrm.diff
-Patch9:         %{name}-5.9p1-send_locale.diff
-Patch10:        %{name}-5.9p1-xauthlocalhostname.diff
-Patch12:        %{name}-5.9p1-xauth.diff
-Patch14:        %{name}-5.9p1-default-protocol.diff
-Patch15:        %{name}-5.9p1-audit.patch
-Patch16:        %{name}-5.9p1-pts.diff
-Patch17:        %{name}-5.9p1-homechroot.patch
-Patch18:        %{name}-5.9p1-sshconfig-knownhostschanges.diff
-Patch19:        %{name}-5.9p1-host_ident.diff
-Patch21:        openssh-nocrazyabicheck.patch
 BuildRequires:  systemd
 
 %{!?_initddir:%global _initddir %{_initrddir}}
@@ -52,24 +34,6 @@ also be forwarded over the secure channel.
 
 %prep
 %setup -q 
-%patch 
-%patch2
-%patch3
-%patch4
-%patch5
-%patch6 -p1
-%patch7 -p1
-%patch8
-%patch9
-%patch10
-%patch12
-%patch14
-%patch15 -p1
-%patch16
-%patch17
-%patch18
-%patch19 -p1
-%patch21
 
 %build
 autoreconf -fiv
