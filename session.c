@@ -1123,7 +1123,7 @@ copy_environment(char **source, char ***env, u_int *envsize)
 }
 
 static char **
-do_setup_env(Session *s, const char *shell)
+do_setup_env(Session *s, const char *shell, int *env_size)
 {
 	char buf[256];
 	u_int i, envsize;
@@ -1310,6 +1310,8 @@ do_setup_env(Session *s, const char *shell)
 		for (i = 0; env[i]; i++)
 			fprintf(stderr, "  %.200s\n", env[i]);
 	}
+
+	*env_size = envsize;
 	return env;
 }
 
@@ -1318,7 +1320,7 @@ do_setup_env(Session *s, const char *shell)
  * first in this order).
  */
 static void
-do_rc_files(Session *s, const char *shell)
+do_rc_files(Session *s, const char *shell, char **env, int *env_size)
 {
 	FILE *f = NULL;
 	char cmd[1024];
@@ -1372,12 +1374,20 @@ do_rc_files(Session *s, const char *shell)
 		    options.xauth_location);
 		f = popen(cmd, "w");
 		if (f) {
+			char hostname[MAXHOSTNAMELEN];
+
 			fprintf(f, "remove %s\n",
 			    s->auth_display);
 			fprintf(f, "add %s %s %s\n",
 			    s->auth_display, s->auth_proto,
 			    s->auth_data);
 			pclose(f);
+			if (gethostname(hostname,sizeof(hostname)) >= 0)
+			    child_set_env(&env,env_size,"XAUTHLOCALHOSTNAME",
+					  hostname);
+			else
+			    debug("Cannot set up XAUTHLOCALHOSTNAME %s\n",
+				  strerror(errno));
 		} else {
 			fprintf(stderr, "Could not run %s\n",
 			    cmd);
@@ -1623,6 +1633,7 @@ do_child(Session *s, const char *command)
 {
 	extern char **environ;
 	char **env;
+	int env_size;
 	char *argv[ARGV_MAX];
 	const char *shell, *shell0, *hostname = NULL;
 	struct passwd *pw = s->pw;
@@ -1689,7 +1700,7 @@ do_child(Session *s, const char *command)
 	 * Make sure $SHELL points to the shell from the password file,
 	 * even if shell is overridden from login.conf
 	 */
-	env = do_setup_env(s, shell);
+	env = do_setup_env(s, shell, &env_size);
 
 #ifdef HAVE_LOGIN_CAP
 	shell = login_getcapstr(lc, "shell", (char *)shell, (char *)shell);
@@ -1758,7 +1769,7 @@ do_child(Session *s, const char *command)
 	closefrom(STDERR_FILENO + 1);
 
 	if (!options.use_login)
-		do_rc_files(s, shell);
+		do_rc_files(s, shell, env, &env_size);
 
 	/* restore SIGPIPE for child */
 	signal(SIGPIPE, SIG_DFL);
