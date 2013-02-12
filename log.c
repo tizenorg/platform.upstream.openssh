@@ -51,6 +51,7 @@
 
 #include "xmalloc.h"
 #include "log.h"
+#include <signal.h>
 
 static LogLevel log_level = SYSLOG_LEVEL_INFO;
 static int log_on_stderr = 1;
@@ -358,6 +359,7 @@ do_log(LogLevel level, const char *fmt, va_list args)
 	char fmtbuf[MSGBUFSIZ];
 	char *txt = NULL;
 	int pri = LOG_INFO;
+	sigset_t nset, oset;
 	int saved_errno = errno;
 	log_handler_fn *tmp_handler;
 
@@ -416,6 +418,14 @@ do_log(LogLevel level, const char *fmt, va_list args)
 		snprintf(msgbuf, sizeof msgbuf, "%s\r\n", fmtbuf);
 		write(STDERR_FILENO, msgbuf, strlen(msgbuf));
 	} else {
+		/* Prevent a race between the grace_alarm
+		* which writes a log message and terminates
+		* and main sshd code that leads to deadlock
+		* as syslog is not async safe.
+		*/
+		sigemptyset(&nset);
+		sigaddset(&nset, SIGALRM);
+		sigprocmask(SIG_BLOCK, &nset, &oset);
 #if defined(HAVE_OPENLOG_R) && defined(SYSLOG_DATA_INIT)
 		openlog_r(argv0 ? argv0 : __progname, LOG_PID, log_facility, &sdata);
 		syslog_r(pri, &sdata, "%.500s", fmtbuf);
@@ -425,6 +435,7 @@ do_log(LogLevel level, const char *fmt, va_list args)
 		syslog(pri, "%.500s", fmtbuf);
 		closelog();
 #endif
+		sigprocmask(SIG_SETMASK, &oset, NULL);
 	}
 	errno = saved_errno;
 }
