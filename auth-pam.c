@@ -786,7 +786,9 @@ sshpam_query(void *ctx, char **name, char **info,
 					fatal("Internal error: PAM auth "
 					    "succeeded when it should have "
 					    "failed");
-				import_environments(&buffer);
+#ifndef USE_POSIX_THREADS
+                import_environments(&buffer);
+#endif
 				*num = 0;
 				**echo_on = 0;
 				ctxt->pam_done = 1;
