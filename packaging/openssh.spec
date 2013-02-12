@@ -9,11 +9,10 @@ Version:        6.0p1
 Release:        0
 %define xversion 1.2.4.1
 Summary:        Secure Shell Client and Server (Remote Login Program)
-License:        BSD-3-Clause ; MIT
+License:        BSD-3-Clause and MIT
 Group:          Productivity/Networking/SSH
 Url:            http://www.openssh.com/
 Source:         ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-%{version}.tar.gz
-Source1:        sshd.init
 Source2:        sshd.pamd
 Source8:        ssh-askpass
 Source11:       sshd-gen-keys-start
@@ -38,7 +37,6 @@ Patch17:        %{name}-5.9p1-homechroot.patch
 Patch18:        %{name}-5.9p1-sshconfig-knownhostschanges.diff
 Patch19:        %{name}-5.9p1-host_ident.diff
 Patch21:        openssh-nocrazyabicheck.patch
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  systemd
 
 %{!?_initddir:%global _initddir %{_initrddir}}
@@ -89,7 +87,6 @@ export LDFLAGS="-pie"
     --disable-strip \
     --with-xauth=%{_prefix}/bin/xauth \
     --target=%{_target_cpu}-tizen-linux
-#   --with-afs=/usr \
 make %{?_smp_mflags}
 
 %install
@@ -97,15 +94,15 @@ make DESTDIR=%{buildroot}/ install
 install -d -m 755 %{buildroot}%{_sysconfdir}/pam.d
 install -d -m 755 %{buildroot}/var/lib/sshd
 install -m 644 %{S:2} %{buildroot}%{_sysconfdir}/pam.d/sshd
-install -d -m 755 %{buildroot}%{_initddir}
-install -m 755 %{S:1} %{buildroot}%{_initddir}/sshd
 # install shell script to automate the process of adding your public key to a remote machine
 install -m 755 contrib/ssh-copy-id %{buildroot}%{_bindir}
 install -m 644 contrib/ssh-copy-id.1 %{buildroot}%{_mandir}/man1
 sed -e "s,@LIBEXEC@,%{_libexecdir},g" < %{S:8} > %{buildroot}%{_libexecdir}/ssh/ssh-askpass
 rm -f %{buildroot}%{_datadir}/Ssh.bin
 sed -i -e s@/usr/libexec@%{_libexecdir}@g %{buildroot}%{_sysconfdir}/ssh/sshd_config
+
 install -D -m 0755 %{SOURCE11} %{buildroot}%{_sbindir}/sshd-gen-keys-start
+# systemd
 install -D -m 0644 %{SOURCE12} %{buildroot}%{_unitdir}/sshd.service
 install -D -m 0644 %{SOURCE13} %{buildroot}%{_unitdir}/sshd.socket
 install -D -m 0644 %{SOURCE14} %{buildroot}%{_unitdir}/sshd@.service
