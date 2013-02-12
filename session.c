@@ -124,6 +124,8 @@ void	do_child(Session *, const char *);
 void	do_motd(void);
 int	check_quietlogin(Session *, const char *);
 
+int	chroot_no_tree = 0;
+
 static void do_authenticated1(Authctxt *);
 static void do_authenticated2(Authctxt *);
 
@@ -812,6 +814,11 @@ do_exec(Session *s, const char *command)
 		debug("Forced command (key option) '%.900s'", command);
 	}
 
+	if ((s->is_subsystem != SUBSYSTEM_INT_SFTP) && chroot_no_tree) {
+		logit("You aren't welcomed, go away!");
+		exit (1);
+	}
+
 #ifdef SSH_AUDIT_EVENTS
 	if (command != NULL)
 		PRIVSEP(audit_run_command(command));
@@ -1425,6 +1432,63 @@ do_nologin(struct passwd *pw)
 }
 
 /*
+ * Test if filesystem is mounted nosuid and nodev
+ */
+
+static void
+test_nosuid (char * path, dev_t fs)
+{
+	FILE *f;
+	struct stat st;
+	char buf[4096], *s, *on, *mountpoint, *opt;
+	int nodev, nosuid;
+
+	if (!(f = popen ("/bin/mount", "r")))
+		fatal ("%s: popen(\"/bin/mount\", \"r\"): %s",
+		    __func__, strerror (errno));
+	for (;;) {
+		s = fgets (buf, sizeof (buf), f);
+		if (ferror (f))
+			fatal ("%s: read from popen: %s", __func__,
+			    strerror (errno));
+		if (!s) {
+			pclose (f);
+			fatal ("cannot found filesystem with the chroot directory");
+		}
+		(void) strtok (buf, " ");
+		on = strtok (NULL, " ");
+		if (strcmp (on, "on")) {
+			pclose (f);
+			fatal ("bad format of mount output");
+		}
+		mountpoint = strtok (NULL, " ");
+		if (memcmp (path, mountpoint, strlen (mountpoint)))
+			continue;
+		if (stat(mountpoint, &st) != 0) {
+			pclose (f);
+			fatal("%s: stat(\"%s\"): %s", __func__,
+			    mountpoint, strerror(errno));
+		}
+		if (fs != st.st_dev)
+			continue;
+		nodev = nosuid = 0;
+		for (opt = strtok (NULL, "("); opt; opt = strtok (NULL, " ,)")) {
+			if (!strcmp (opt, "nodev"))
+				nodev = 1;
+			else if (!strcmp (opt, "nosuid"))
+				nosuid = 1;
+			else if (!strcmp (opt, "noexec"))
+				nosuid = 1;
+			if (nodev && nosuid) {
+				pclose (f);
+				return;
+			}
+		}
+		fatal ("chroot into directory without nodev or nosuid");
+	}
+}
+
+/*
  * Chroot into a directory after checking it for safety: all path components
  * must be root-owned directories with strict permissions.
  */
@@ -1434,6 +1498,7 @@ safely_chroot(const char *path, uid_t uid)
 	const char *cp;
 	char component[MAXPATHLEN];
 	struct stat st;
+	int last;
 
 	if (*path != '/')
 		fatal("chroot path does not begin at root");
@@ -1445,7 +1510,7 @@ safely_chroot(const char *path, uid_t uid)
 	 * root-owned directory with strict permissions.
 	 */
 	for (cp = path; cp != NULL;) {
-		if ((cp = strchr(cp, '/')) == NULL)
+		if (((last = ((cp = strchr(cp, '/')) == NULL))))
 			strlcpy(component, path, sizeof(component));
 		else {
 			cp++;
@@ -1458,14 +1523,20 @@ safely_chroot(const char *path, uid_t uid)
 		if (stat(component, &st) != 0)
 			fatal("%s: stat(\"%s\"): %s", __func__,
 			    component, strerror(errno));
-		if (st.st_uid != 0 || (st.st_mode & 022) != 0)
+		if ((st.st_uid != 0 || (st.st_mode & 022) != 0) && !(last && st.st_uid == uid))
 			fatal("bad ownership or modes for chroot "
 			    "directory %s\"%s\"", 
 			    cp == NULL ? "" : "component ", component);
 		if (!S_ISDIR(st.st_mode))
 			fatal("chroot path %s\"%s\" is not a directory",
 			    cp == NULL ? "" : "component ", component);
+	}
+	setenv ("TZ", "/etc/localtime", 0);
+	tzset ();
 
+	if (st.st_uid) {
+		test_nosuid (path, st.st_dev);
+		++chroot_no_tree;
 	}
 
 	if (chdir(path) == -1)
@@ -1476,6 +1547,10 @@ safely_chroot(const char *path, uid_t uid)
 	if (chdir("/") == -1)
 		fatal("%s: chdir(/) after chroot: %s",
 		    __func__, strerror(errno));
+
+	if (access ("/etc/localtime", R_OK) < 0)
+		++chroot_no_tree;
+
 	verbose("Changed root directory to \"%s\"", path);
 }
 

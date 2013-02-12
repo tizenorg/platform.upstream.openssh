@@ -43,6 +43,7 @@
 #include "xmalloc.h"
 #include "buffer.h"
 #include "log.h"
+#include "chrootenv.h"
 
 #include "sftp.h"
 #include "sftp-common.h"
@@ -196,13 +197,13 @@ ls_file(const char *name, const struct stat *st, int remote, int si_units)
 	char sbuf[FMT_SCALED_STRSIZE];
 
 	strmode(st->st_mode, mode);
-	if (!remote) {
+	if (!remote && !chroot_no_tree) {
 		user = user_from_uid(st->st_uid, 0);
 	} else {
 		snprintf(ubuf, sizeof ubuf, "%u", (u_int)st->st_uid);
 		user = ubuf;
 	}
-	if (!remote) {
+	if (!remote && !chroot_no_tree) {
 		group = group_from_gid(st->st_gid, 0);
 	} else {
 		snprintf(gbuf, sizeof gbuf, "%u", (u_int)st->st_gid);

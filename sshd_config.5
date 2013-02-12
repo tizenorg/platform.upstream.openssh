@@ -269,6 +269,17 @@ inside the chroot directory (see
 .Xr sftp-server 8
 for details).
 .Pp
+In the special case when only sftp is used, not ssh nor scp,
+it is possible to use
+.Cm ChrootDirectory
+%h or
+.Cm ChrootDirectory
+/some/path/%u. The file system containing this directory must be
+mounted with options nodev and either nosuid or noexec. The owner of the
+directory should be the user. The ownership of the other components of the path
+must fulfill the usual conditions. No aditional files are required to be present
+in the directory.
+.Pp
 The default is not to
 .Xr chroot 2 .
 .It Cm Ciphers
