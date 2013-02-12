@@ -10,7 +10,7 @@ Release:        0
 %define xversion 1.2.4.1
 Summary:        Secure Shell Client and Server (Remote Login Program)
 License:        BSD-3-Clause and MIT
-Group:          Productivity/Networking/SSH
+Group:          System/Network
 Url:            http://www.openssh.com/
 Source:         ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-%{version}.tar.gz
 Source2:        sshd.pamd
@@ -84,7 +84,6 @@ getent group sshd >/dev/null || %{_sbindir}/groupadd -o -r sshd
 getent passwd sshd >/dev/null || %{_sbindir}/useradd -r -g sshd -d /var/lib/sshd -s /bin/false -c "SSH daemon" sshd
 
 
-%docs_package
 
 %files
 %defattr(-,root,root)
@@ -94,7 +93,6 @@ getent passwd sshd >/dev/null || %{_sbindir}/useradd -r -g sshd -d /var/lib/sshd
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ssh/ssh_config
 %attr(0640,root,root) %config(noreplace) %{_sysconfdir}/ssh/sshd_config
 %attr(0644,root,root) %config %{_sysconfdir}/pam.d/sshd
-%attr(0755,root,root) %config %{_initddir}/sshd
 %attr(0755,root,root) %{_bindir}/ssh
 %{_bindir}/scp
 %{_bindir}/sftp
