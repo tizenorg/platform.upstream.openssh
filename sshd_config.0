@@ -186,6 +186,14 @@ DESCRIPTION
              though sessions which use logging do require /dev/log inside the
              chroot directory (see sftp-server(8) for details).
 
+             In the special case when only sftp is used, not ssh nor scp, it
+             is possible to use ChrootDirectory %h or ChrootDirectory
+             /some/path/%u. The file system containing this directory must be
+             mounted with options nodev and either nosuid or noexec. The owner
+             of the directory should be the user. The ownership of the other
+             components of the path must fulfill the usual conditions. No adi-
+             tional files are required to be present in the directory.
+
              The default is not to chroot(2).
 
      Ciphers
