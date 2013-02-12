@@ -314,6 +314,7 @@ sighup_handler(int sig)
 static void
 sighup_restart(void)
 {
+	int i;
 	logit("Received SIGHUP; restarting.");
 	platform_pre_restart();
 	close_listen_socks();
@@ -1410,7 +1411,11 @@ main(int ac, char **av)
 #ifndef HAVE_SETPROCTITLE
 	/* Prepare for later setproctitle emulation */
 	compat_init_setproctitle(ac, av);
-	av = saved_argv;
+
+	av = xmalloc(sizeof(*saved_argv) * (saved_argc + 1));
+	for (i = 0; i < saved_argc; i++)
+		av[i] = xstrdup(saved_argv[i]);
+	av[i] = NULL;
 #endif
 
 	if (geteuid() == 0 && setgroups(0, NULL) == -1)
