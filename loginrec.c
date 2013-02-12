@@ -543,7 +543,7 @@ getlast_entry(struct logininfo *li)
  * 1. The full filename (including '/dev')
  * 2. The stripped name (excluding '/dev')
  * 3. The abbreviated name (e.g. /dev/ttyp00 -> yp00
- *                               /dev/pts/1  -> ts/1 )
+ *                               /dev/pts/1  -> /1 )
  *
  * Form 3 is used on some systems to identify a .tmp.? entry when
  * attempting to remove it. Typically both addition and removal is
@@ -604,6 +604,10 @@ line_abbrevname(char *dst, const char *src, int dstsize)
 	if (strncmp(src, "tty", 3) == 0)
 		src += 3;
 #endif
+	if (strncmp(src, "pts/", 4) == 0) {
+		src += 3;
+		if (strlen(src) > 4) src++;
+	}
 
 	len = strlen(src);
 
