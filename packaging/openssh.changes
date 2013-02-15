@@ -1,3 +1,6 @@
+* Thu Feb 14 2013 Anas Nashif <anas.nashif@intel.com> submit/trunk/20130214.030127@630d0a8
+- Generate ssh keys if needed
+
 * Wed Feb 13 2013 Anas Nashif <anas.nashif@intel.com> submit/trunk/20130211.191056@85d31e5
 - Remove local patches and integrate them
 
