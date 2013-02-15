@@ -3,6 +3,7 @@ Description=SSH Per-Connection Server
 After=syslog.target 
 
 [Service]
+ExecStartPre=/usr/sbin/sshd-gen-keys-start
 ExecStart=-/usr/sbin/sshd -i
 ExecReload=/bin/kill -HUP $MAINPID
 StandardInput=socket
