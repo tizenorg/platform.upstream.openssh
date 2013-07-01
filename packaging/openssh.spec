@@ -19,6 +19,7 @@ Source11:       sshd-gen-keys-start
 Source12:       sshd.service
 Source13:       sshd.socket
 Source14:       sshd@.service
+Source1001: 	openssh.manifest
 BuildRequires:  systemd
 
 %{!?_initddir:%global _initddir %{_initrddir}}
@@ -34,6 +35,7 @@ also be forwarded over the secure channel.
 
 %prep
 %setup -q 
+cp %{SOURCE1001} .
 
 %build
 autoreconf -fiv
@@ -86,6 +88,7 @@ getent passwd sshd >/dev/null || %{_sbindir}/useradd -r -g sshd -d /var/lib/sshd
 
 
 %files
+%manifest %{name}.manifest
 %defattr(-,root,root)
 %dir %attr(755,root,root) /var/lib/sshd
 %attr(0755,root,root) %dir %{_sysconfdir}/ssh
