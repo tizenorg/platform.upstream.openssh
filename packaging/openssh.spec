@@ -5,7 +5,7 @@ BuildRequires:  openssl-devel
 BuildRequires:  pam-devel
 Requires:       /usr/bin/netstat
 Requires(pre):  pwdutils coreutils
-Version:        6.0p1
+Version:        6.2p2
 Release:        0
 %define xversion 1.2.4.1
 Summary:        Secure Shell Client and Server (Remote Login Program)
