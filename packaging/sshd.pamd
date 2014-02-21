@@ -7,3 +7,4 @@ password include        system-auth
 session	 required	pam_loginuid.so
 session  include        system-auth
 session  optional       pam_lastlog.so   silent noupdate showfailed
+session  required       pam_smack.so

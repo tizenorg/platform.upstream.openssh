@@ -4,6 +4,7 @@ BuildRequires:  autoconf
 BuildRequires:  openssl-devel
 BuildRequires:  pam-devel
 Requires:       /usr/bin/netstat
+Requires:       pam-modules-extra
 Requires(pre):  pwdutils coreutils
 Version:        6.2p2
 Release:        0
