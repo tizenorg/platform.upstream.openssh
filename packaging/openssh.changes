@@ -1,3 +1,37 @@
+* Mon Feb 24 2014 Michael Leibowitz <michael.leibowitz@intel.com> accepted/tizen/ivi/genivi/20140131.034646@c7df232
+- Add pam_smack to the sshd pam module list (PTREL-549)
+- Upgrade to 6.2p2 to fix CVE-2010-5107
+- resetting manifest requested domain to floor
+- remove unused file
+- Generate ssh keys if needed
+- Generate ssh keys if needed
+- Remove local patches and integrate them
+- cleanup
+- remove integrated patches
+- openssh-nocrazyabicheck
+- openssh-5.9p1-host_ident.diff
+- openssh-5.9p1-sshconfig-knownhostschanges.diff
+- openssh-5.9p1-homechroot
+- openssh-5.9p1-pts.diff
+- openssh-5.9p1-default-protocol.diff
+- openssh-5.9p1-xauth.diff
+- openssh-5.9p1-xauthlocalhostname.diff
+- openssh-5.9p1-send_locale.diff
+- openssh-5.9p1-blocksigalrm.diff
+- openssh-5.9p1-engines.diff
+- openssh-5.9p1-eal3.diff
+- openssh-5.9p1-pam-fix3.diff
+- openssh-5.9p1-saveargv-fix.diff
+- openssh-5.9p1-pam-fix2.diff
+- openssh-5.9p1-sshd_config.diff
+- cleanup
+- changelog
+- Activate openssh on-demand using systemd socket activation
+- add packaging
+- add packaging
+- add packaging
+- Imported Upstream version 6.2p2
+
 * Thu Feb 14 2013 Anas Nashif <anas.nashif@intel.com> submit/trunk/20130214.030127@630d0a8
 - Generate ssh keys if needed
 
