@@ -1,12 +1,12 @@
 [Unit]
 Description=SSH Per-Connection Server
-After=syslog.target 
 
 [Service]
 ExecStartPre=/usr/sbin/sshd-gen-keys-start
-ExecStart=-/usr/sbin/sshd -i
+ExecStart=-/usr/sbin/sshd -i -e
 ExecReload=/bin/kill -HUP $MAINPID
 StandardInput=socket
+StandardError=journal
 
 [Install]
 WantedBy=network.target
