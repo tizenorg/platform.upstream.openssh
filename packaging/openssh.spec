@@ -1,14 +1,9 @@
-Name:           openssh
 %define _appdefdir      %{_prefix}/share/X11/app-defaults
-BuildRequires:  autoconf
-BuildRequires:  openssl-devel
-BuildRequires:  pam-devel
-Requires:       /usr/bin/netstat
-Requires:       pam-modules-extra
-Requires(pre):  pwdutils coreutils
-Version:        6.2p2
-Release:        0
 %define xversion 1.2.4.1
+
+Name:           openssh
+Version:        6.6p1
+Release:        0
 Summary:        Secure Shell Client and Server (Remote Login Program)
 License:        BSD-3-Clause and MIT
 Group:          System/Network
@@ -20,8 +15,15 @@ Source11:       sshd-gen-keys-start
 Source12:       sshd.service
 Source13:       sshd.socket
 Source14:       sshd@.service
-Source1001: 	openssh.manifest
+Source1001:     openssh.manifest
+
 BuildRequires:  systemd
+BuildRequires:  autoconf
+BuildRequires:  openssl-devel
+BuildRequires:  pam-devel
+Requires:       /usr/bin/netstat
+Requires:       pam-modules-extra
+Requires(pre):  pwdutils coreutils
 
 %{!?_initddir:%global _initddir %{_initrddir}}
 
@@ -49,17 +51,17 @@ export LDFLAGS="-pie"
     --sysconfdir=%{_sysconfdir}/ssh \
     --libexecdir=%{_libexecdir}/ssh \
     --with-pam \
-    --with-privsep-path=/var/lib/empty \
+    --with-privsep-path=%{_localstatedir}/lib/empty \
     --with-sandbox=rlimit \
     --disable-strip \
     --with-xauth=%{_prefix}/bin/xauth \
     --target=%{_target_cpu}-tizen-linux
-make %{?_smp_mflags}
+%__make %{?_smp_mflags}
 
 %install
 make DESTDIR=%{buildroot}/ install
 install -d -m 755 %{buildroot}%{_sysconfdir}/pam.d
-install -d -m 755 %{buildroot}/var/lib/sshd
+install -d -m 755 %{buildroot}%{_localstatedir}/lib/sshd
 install -m 644 %{S:2} %{buildroot}%{_sysconfdir}/pam.d/sshd
 # install shell script to automate the process of adding your public key to a remote machine
 install -m 755 contrib/ssh-copy-id %{buildroot}%{_bindir}
@@ -80,18 +82,14 @@ ln -s ../sshd.socket %{buildroot}/%{_unitdir}/sockets.target.wants/sshd.socket
 rm -rf %{buildroot}/%{_mandir}/cat*
 rm -rf %{buildroot}/%{_mandir}/man*
 
-
-
 %pre
 getent group sshd >/dev/null || %{_sbindir}/groupadd -o -r sshd
-getent passwd sshd >/dev/null || %{_sbindir}/useradd -r -g sshd -d /var/lib/sshd -s /bin/false -c "SSH daemon" sshd
-
-
+getent passwd sshd >/dev/null || %{_sbindir}/useradd -r -g sshd -d %{_localstatedir}/lib/sshd -s /bin/false -c "SSH daemon" sshd
 
 %files
 %manifest %{name}.manifest
 %defattr(-,root,root)
-%dir %attr(755,root,root) /var/lib/sshd
+%dir %attr(755,root,root) %{_localstatedir}/lib/sshd
 %attr(0755,root,root) %dir %{_sysconfdir}/ssh
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ssh/moduli
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ssh/ssh_config
