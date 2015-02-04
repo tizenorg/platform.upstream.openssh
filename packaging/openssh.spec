@@ -51,6 +51,7 @@ export LDFLAGS="-pie"
     --sysconfdir=%{_sysconfdir}/ssh \
     --libexecdir=%{_libexecdir}/ssh \
     --with-pam \
+    --without-lastlog \
     --with-privsep-path=%{_localstatedir}/lib/empty \
     --with-sandbox=rlimit \
     --disable-strip \
