@@ -23,7 +23,7 @@ BuildRequires:  openssl-devel
 BuildRequires:  pam-devel
 Requires:       /usr/bin/netstat
 Requires:       pam-modules-extra
-Requires(pre):  pwdutils coreutils
+Requires(pre):  shadow-utils coreutils
 
 %{!?_initddir:%global _initddir %{_initrddir}}
 
