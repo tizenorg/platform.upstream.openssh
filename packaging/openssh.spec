@@ -37,15 +37,15 @@ xorg-x11 (X Window System) connections and arbitrary TCP/IP ports can
 also be forwarded over the secure channel.
 
 %prep
-%setup -q 
+%setup -q
 cp %{SOURCE1001} .
 
 %build
 autoreconf -fiv
 PIEFLAGS="-fpie"
-export CFLAGS="%{optflags} $PIEFLAGS -fstack-protector"
-export CXXFLAGS="%{optflags} $PIEFLAGS -fstack-protector"
-export LDFLAGS="-pie"
+export CFLAGS="%{optflags} $PIEFLAGS -fstack-protector -fcommon "
+export CXXFLAGS="%{optflags} $PIEFLAGS -fstack-protector -fcommon "
+export LDFLAGS="-pie -ldl "
 %configure \
     --with-ssl-engine \
     --sysconfdir=%{_sysconfdir}/ssh \
